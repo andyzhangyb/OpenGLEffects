@@ -76,10 +76,13 @@ int main() {
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 
-	unsigned int textureId;
-	glGenTextures(1, &textureId);
+	unsigned int frameBuffer;
+	glGenFramebuffers(1, &frameBuffer);
+
+	unsigned int textureIds[2];
+	glGenTextures(2, textureIds);
 	string fileName = "Resources/Textures/FreeSkyBackground.jpg";
-	glBindTexture(GL_TEXTURE_2D, textureId);
+	glBindTexture(GL_TEXTURE_2D, *textureIds);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -96,31 +99,68 @@ int main() {
 			picFormat = GL_RGB;
 		else if (textureNrChannels == 4)
 			picFormat = GL_RGBA;
-		glTexImage2D(GL_TEXTURE_2D, 0, picFormat, textureWidth, textureHeight, 0, picFormat, GL_UNSIGNED_BYTE, picData);
+		glTexImage2D(GL_TEXTURE_2D, 0, picFormat, WIDTH, HEIGHT, 0, picFormat, GL_UNSIGNED_BYTE, picData);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else {
 		cout << "failed to load texture : " << fileName << endl;
 	}
 	stbi_image_free(picData);
-	Shader shader("Resources/Shaders/WaterStreak/water_streak.vs", "Resources/Shaders/WaterStreak/water_streak.fs");
-	shader.Use();
-	shader.Set1UniformValue("texture1", 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+	glBindTexture(GL_TEXTURE_2D, *(textureIds + 1));
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *(textureIds + 1), 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	Shader shaderStreak("Resources/Shaders/WaterStreak/water_streak.vs", "Resources/Shaders/WaterStreak/water_streak.fs");
+	shaderStreak.Use();
+	shaderStreak.Set1UniformValue("texture1", 0);
+	Shader shaderNormal("Resources/Shaders/WaterStreak/water_normal.vs", "Resources/Shaders/WaterStreak/water_normal.fs");
+
+	unsigned int uboSize = 256 * 16;
+	unsigned int uboPoints;
+	glGenBuffers(1, &uboPoints);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboPoints);
+	glBufferData(GL_UNIFORM_BUFFER, uboSize, NULL, GL_STATIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboPoints, 0, uboSize);
+
+	unsigned int uniformBlockIndex = glGetUniformBlockIndex(shaderStreak.ProgramID, "LightSourceBlock");
+	glUniformBlockBinding(shaderStreak.ProgramID, uniformBlockIndex, 0);
+	
+	glBindBuffer(GL_UNIFORM_BUFFER, uboPoints);
+	glm::vec3 color1(1.f, 0.f, 0.f);
+	glm::vec3 color2(0.f, 1.f, 0.f);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::vec3), glm::value_ptr(color1));
+	glBufferSubData(GL_UNIFORM_BUFFER, 16, sizeof(glm::vec3), glm::value_ptr(color2));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	while (!glfwWindowShouldClose(window)) {
+		glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
-
 		glClear(GL_COLOR_BUFFER_BIT);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textureId);
-		shader.Use();
+
+		shaderNormal.Use();
 		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		shaderStreak.Use();
+		glBindVertexArray(VAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, *(textureIds + 1));
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
+	glDeleteTextures(2, textureIds);
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);

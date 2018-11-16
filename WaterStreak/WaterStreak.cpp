@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -15,6 +16,8 @@ using namespace std;
 
 const unsigned int WIDTH = 1920;
 const unsigned int HEIGHT = 1080;
+
+vector<glm::vec3> points;
 
 int main() {
 	glfwInit();
@@ -118,6 +121,7 @@ int main() {
 	Shader shaderStreak("Resources/Shaders/WaterStreak/water_streak.vs", "Resources/Shaders/WaterStreak/water_streak.fs");
 	shaderStreak.Use();
 	shaderStreak.Set1UniformValue("texture1", 0);
+	shaderStreak.Set1UniformValue("textureNormal", 1);
 	Shader shaderNormal("Resources/Shaders/WaterStreak/water_normal.vs", "Resources/Shaders/WaterStreak/water_normal.fs");
 
 	unsigned int uboSize = 256 * 16;
@@ -131,17 +135,27 @@ int main() {
 	unsigned int uniformBlockIndex = glGetUniformBlockIndex(shaderStreak.ProgramID, "LightSourceBlock");
 	glUniformBlockBinding(shaderStreak.ProgramID, uniformBlockIndex, 0);
 	
+	points.push_back(glm::vec3(0, 0, glfwGetTime()));
+
+	float speed = 1.f / 10.f;
+	float time = glfwGetTime();
 	glBindBuffer(GL_UNIFORM_BUFFER, uboPoints);
-	glm::vec3 color1(1.f, 0.f, 0.f);
-	glm::vec3 color2(0.f, 1.f, 0.f);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::vec3), glm::value_ptr(color1));
-	glBufferSubData(GL_UNIFORM_BUFFER, 16, sizeof(glm::vec3), glm::value_ptr(color2));
+	glm::vec3 v(0.f, 0.f, 0.f);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float), &speed);
+	glBufferSubData(GL_UNIFORM_BUFFER, 4, sizeof(float), &time);
+	glBufferSubData(GL_UNIFORM_BUFFER, 8, sizeof(glm::vec3), glm::value_ptr(points[0]));
+	glBufferSubData(GL_UNIFORM_BUFFER, 24, sizeof(glm::vec3), glm::value_ptr(v));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	while (!glfwWindowShouldClose(window)) {
 		glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		time = glfwGetTime();
+		glBindBuffer(GL_UNIFORM_BUFFER, uboPoints);
+		glBufferSubData(GL_UNIFORM_BUFFER, 4, sizeof(float), &time);
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 		shaderNormal.Use();
 		glBindVertexArray(VAO);
@@ -153,6 +167,8 @@ int main() {
 		shaderStreak.Use();
 		glBindVertexArray(VAO);
 		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, *textureIds);
+		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, *(textureIds + 1));
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

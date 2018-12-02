@@ -14,7 +14,7 @@ using namespace std;
 #include <stb_image.h>
 #endif // !STB_IMAGE_IMPLEMENTATION
 
-const unsigned int WIDTH = 1920;
+const unsigned int WIDTH = 1080;
 const unsigned int HEIGHT = 1080;
 
 vector<glm::vec3> points;
@@ -112,6 +112,8 @@ int main() {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 	glBindTexture(GL_TEXTURE_2D, *(textureIds + 1));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

@@ -122,7 +122,7 @@ private:
 
 		getResult(target, type, &isSuccess);
         if (!isSuccess){
-            getLog(ProgramID, sizeof(infoLog), NULL, infoLog);
+            getLog(target, sizeof(infoLog), NULL, infoLog);
 			cout << errorMsg << " : " << infoLog << ". " << target << " : " << type << endl;
         }
 	}

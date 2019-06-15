@@ -149,7 +149,7 @@ int main() {
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboPoints, 0, uboSize);
 
-	unsigned int uniformBlockIndex = glGetUniformBlockIndex(shaderStreak.ProgramID, "LightSourceBlock");
+	unsigned int uniformBlockIndex = glGetUniformBlockIndex(shaderStreak.ProgramID, "ClickPointsBlock");
 	glUniformBlockBinding(shaderStreak.ProgramID, uniformBlockIndex, 0);
     
     copyUniformToGPU();

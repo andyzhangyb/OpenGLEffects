@@ -4,7 +4,7 @@ out vec4 FragColor;
 in vec2 position;
 in vec2 texPosition;
 
-layout(std140) uniform LightSourceBlock
+layout(std140) uniform ClickPointsBlock
 {
     float currentTime;
     vec3 points[256];

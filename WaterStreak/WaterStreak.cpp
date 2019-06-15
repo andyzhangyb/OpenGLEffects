@@ -14,10 +14,14 @@ using namespace std;
 #include <stb_image.h>
 #endif // !STB_IMAGE_IMPLEMENTATION
 
-const unsigned int WIDTH = 1080;
-const unsigned int HEIGHT = 1080;
+const unsigned int WIDTH = 900;
+const unsigned int HEIGHT = 900;
+const unsigned int MaxPointsCount = 256;
+unsigned int uboPoints;
 
 vector<glm::vec3> points;
+
+void copyUniformToGPU();
 
 int main() {
 	glfwInit();
@@ -40,7 +44,19 @@ int main() {
 	});
 	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-			cout << "You click left button." << endl;
+            double xPos, yPos;
+            int width, height;
+            glfwGetWindowSize(window, &width, &height);
+            glfwGetCursorPos(window, &xPos, &yPos);
+            
+            float x = xPos / width * 2  - 1;
+            float y = -yPos / height * 2 + 1;
+            
+            if (points.size() >= MaxPointsCount) {
+                
+            }
+            else
+                points.push_back(glm::vec3(x, y, glfwGetTime()));
 		}
 	});
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -84,7 +100,7 @@ int main() {
 
 	unsigned int textureIds[2];
 	glGenTextures(2, textureIds);
-	string fileName = "Resources/Textures/FreeSkyBackground.jpg";
+	string fileName = "Resources/Textures/UnderSea.jpg";
 	glBindTexture(GL_TEXTURE_2D, *textureIds);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -114,7 +130,7 @@ int main() {
 	glBindTexture(GL_TEXTURE_2D, *(textureIds + 1));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *(textureIds + 1), 0);
@@ -126,8 +142,7 @@ int main() {
 	shaderStreak.Set1UniformValue("textureNormal", 1);
 	Shader shaderNormal("Resources/Shaders/WaterStreak/water_normal.vs", "Resources/Shaders/WaterStreak/water_normal.fs");
 
-	unsigned int uboSize = 256 * 16;
-	unsigned int uboPoints;
+	unsigned int uboSize = MaxPointsCount * 16 + 16;
 	glGenBuffers(1, &uboPoints);
 	glBindBuffer(GL_UNIFORM_BUFFER, uboPoints);
 	glBufferData(GL_UNIFORM_BUFFER, uboSize, NULL, GL_STATIC_DRAW);
@@ -136,28 +151,15 @@ int main() {
 
 	unsigned int uniformBlockIndex = glGetUniformBlockIndex(shaderStreak.ProgramID, "LightSourceBlock");
 	glUniformBlockBinding(shaderStreak.ProgramID, uniformBlockIndex, 0);
-	
-	points.push_back(glm::vec3(0, 0, glfwGetTime()));
-
-	float speed = 1.f / 10.f;
-	float time = glfwGetTime();
-	glBindBuffer(GL_UNIFORM_BUFFER, uboPoints);
-	glm::vec3 v(0.f, 0.f, 0.f);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float), &speed);
-	glBufferSubData(GL_UNIFORM_BUFFER, 4, sizeof(float), &time);
-	glBufferSubData(GL_UNIFORM_BUFFER, 8, sizeof(glm::vec3), glm::value_ptr(points[0]));
-	glBufferSubData(GL_UNIFORM_BUFFER, 24, sizeof(glm::vec3), glm::value_ptr(v));
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    
+    copyUniformToGPU();
 
 	while (!glfwWindowShouldClose(window)) {
 		glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		time = glfwGetTime();
-		glBindBuffer(GL_UNIFORM_BUFFER, uboPoints);
-		glBufferSubData(GL_UNIFORM_BUFFER, 4, sizeof(float), &time);
-		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+		copyUniformToGPU();
 
 		shaderNormal.Use();
 		glBindVertexArray(VAO);
@@ -186,4 +188,21 @@ int main() {
 	glfwTerminate();
 
 	return 0;
+}
+
+void copyUniformToGPU() {
+    float time = glfwGetTime();
+    glBindBuffer(GL_UNIFORM_BUFFER, uboPoints);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float), &time);
+    for (int i = 0; i < points.size(); i++) {
+        if (i >= MaxPointsCount)
+            break;
+        int offset = i * 16 + 16;
+        if (points[i].x == 0 && points[i].y == 0 && points[i].z == 0) {
+            glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(glm::vec3), glm::value_ptr(points[i]));
+            break;
+        } else
+            glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(glm::vec3), glm::value_ptr(points[i]));
+    }
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }

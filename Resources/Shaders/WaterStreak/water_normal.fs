@@ -6,28 +6,39 @@ in vec2 texPosition;
 
 layout(std140) uniform LightSourceBlock
 {
-    float waveSpeed;
     float currentTime;
     vec3 points[256];
 };
 
 void main() {
     float waveHight = 0;
-    float Frequency = 0.5;
+    float frequency = 80;
+    float speed = 3.14 / 10;
+
+    float dbDistance = 0.04;
+    float dbOut = 0.3;
+    float dbIn = 0.1;
+
     for (int i = 0; i < 256; i++) {
         vec3 point = points[i];
         if (point.x == 0.f && point.y == 0.f && point.z == 0.f)
             break;
         float timeDiff = currentTime - point.z;
-        // float distanceOfClick = distance(position, point.xy);
-        float distanceOfClick = distance(position, vec2(0, 0));
-        float waveRadius = timeDiff * waveSpeed;
+        float distanceOfClick = distance(position, point.xy);
+        float waveRadius = timeDiff * speed;
 
-        float decayOfTime = timeDiff + 1;
-        float decayOfDistance = (waveRadius - distanceOfClick) * 0.8;
-        float v = (sin(Frequency * (waveRadius - distanceOfClick) * 100 / 3.14 * 4) + 1);
-        waveHight = waveHight + v * 0.5;
-            break;
+        float v = cos(frequency * (distanceOfClick - waveRadius)) / 50 + 1 / 50;
+        if (v < 0)
+            v = -v;
+        if (distanceOfClick > waveRadius) { // 圈外
+            v = v - (distanceOfClick - waveRadius) * dbOut - dbDistance * waveRadius;
+        } else { //圈内
+            v = v - (waveRadius - distanceOfClick) * dbIn - dbDistance * waveRadius;
+        }
+        if (v < 1 / 50)
+            v = 1 / 50;
+
+        waveHight += v;
     }
-    FragColor = vec4(texPosition, waveHight, 1.f);
+    FragColor = vec4(texPosition.xy, waveHight, 1.f);
 }

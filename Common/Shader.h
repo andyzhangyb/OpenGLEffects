@@ -67,7 +67,18 @@ public:
 		fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 		glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
 		glCompileShader(fragmentShader);
-		CheckCompileErrors(fragmentShader, GL_COMPILE_STATUS, "compile fragmentShader failed.", glGetShaderiv, glGetShaderInfoLog);
+        //        CheckCompileErrors(fragmentShader, GL_COMPILE_STATUS, "compile fragmentShader failed.", glGetShaderiv, glGetShaderInfoLog);
+        {
+            int isSuccess;
+            char infoLog[1024];
+            memset(infoLog, 0, sizeof(infoLog));
+            
+            glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &isSuccess);
+            if (!isSuccess){
+                glGetShaderInfoLog(fragmentShader, sizeof(infoLog), NULL, infoLog);
+                cout << "dffff" << " : " << infoLog << ". " << endl;
+            }
+        }
 
 		if (!geometryStrSource.empty()) {
 			geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
@@ -122,7 +133,7 @@ private:
 
 		getResult(target, type, &isSuccess);
         if (!isSuccess){
-            getLog(target, sizeof(infoLog), NULL, infoLog);
+            getLog(ProgramID, sizeof(infoLog), NULL, infoLog);
 			cout << errorMsg << " : " << infoLog << ". " << target << " : " << type << endl;
         }
 	}

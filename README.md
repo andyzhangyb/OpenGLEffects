@@ -15,4 +15,4 @@ Effects and corresponding post:
 1. ripple:
 https://tomorrow-will-be-better.com/shader%e7%94%9f%e6%88%90%e6%b0%b4%e6%b3%a2%e7%ba%b9%e7%89%b9%e6%95%88
 2. 2D Shadow:
-https://tomorrow-will-be-better.com/shader%e7%94%9f%e6%88%90%e6%b0%b4%e6%b3%a2%e7%ba%b9%e7%89%b9%e6%95%88
+https://tomorrow-will-be-better.com/2DShadow%e7%9a%84%e7%94%9f%e6%88%90%ef%bc%88%e7%94%9f%e6%88%902D%e9%98%b4%e5%bd%b1%ef%bc%89

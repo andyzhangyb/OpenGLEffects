@@ -20,13 +20,15 @@ using namespace std;
 
 const unsigned int WIDTH = 900;
 const unsigned int HEIGHT = 900;
+const unsigned int WIDTH_SHADOW = 900;
+const unsigned int HEIGHT_SHADOW = 900;
 const unsigned int MaxPointsCount = 256;
 unsigned int uboPoints;
 
 vector<glm::vec3> points;
 
 void renderCube();
-void renderScene(const Shader &);
+void generateCubeBox(float * vertexs, int originSize, int step, float ** outVertexs, int * size);
 
 int main() {
 	glfwInit();
@@ -76,40 +78,51 @@ int main() {
 	}
 
 	float verticesObstacle[] = {
-		-0.5f, -0.25f, 0.0f,
-		-0.25f, 0.25f, 0.0f,
-		-0.15f, -0.75f, 0.0f
+		-0.5f, -0.25f, 1.0f,
+		-0.25f, 0.20f, -1.0f,
+		-0.15f, -0.45f, 1.0f
 	};
 
 	float verticesPanel[] = {
-		1.f, 1.f,
-		1.f, -1.f,
-		-1.f, -1.f,
-		-1.f, 1.f
+		1.f, 1.f, 0.0f,
+		1.f, -1.f, 0.0f,
+		-1.f, -1.f, 0.0f,
+		-1.f, 1.f, 0.0f
 	};
 	unsigned int indicesPanel[] = {
 		0, 1, 3,
 		1, 2, 3
 	};
-	unsigned int VAO[2], VBO[2], EBO;
-	glGenVertexArrays(2, VAO);
-	glGenBuffers(2, VBO);
+
+	float * finalVerticesObstacle;
+	int finalSize;
+	generateCubeBox(verticesObstacle, sizeof(verticesObstacle) / sizeof(float), 3, &finalVerticesObstacle, &finalSize);
+
+	unsigned int VAO[3], VBO[3], EBO;
+	glGenVertexArrays(3, VAO);
+	glGenBuffers(3, VBO);
 	glGenBuffers(1, &EBO);
 
 	glBindVertexArray(VAO[0]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesObstacle), verticesObstacle, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, finalSize * sizeof(float), finalVerticesObstacle, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 
 	glBindVertexArray(VAO[1]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+	glBufferData(GL_ARRAY_BUFFER,sizeof(verticesObstacle), verticesObstacle, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+
+	glBindVertexArray(VAO[2]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesPanel), verticesPanel, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesPanel), indicesPanel, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 
 	glBindVertexArray(0);
 
@@ -120,9 +133,9 @@ int main() {
 	glGenTextures(1, &depthCubeMap);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
 	for (size_t i = 0; i < 6; i++)
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, WIDTH, HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, WIDTH_SHADOW, HEIGHT_SHADOW, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -153,25 +166,23 @@ int main() {
 		shaderShadowMap.Set2UniformValue("lightPos", lightPos.x, lightPos.y);
 		shaderShadowMap.Set1UniformValue("farPlane", farPlane);
 		
-		glm::mat4 shadowProj = glm::perspective(glm::radians(90.f), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
+		glm::mat4 shadowProj = glm::perspective(glm::radians(90.f), (float)WIDTH_SHADOW / (float)HEIGHT_SHADOW, nearPlane, farPlane);
 		glm::mat4 matrix;
-		matrix = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		matrix = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		shaderShadowMap.SetMat4("shadowMatrices[0]", matrix);
-		matrix = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		matrix = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		shaderShadowMap.SetMat4("shadowMatrices[1]", matrix);
 		matrix = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		shaderShadowMap.SetMat4("shadowMatrices[2]", matrix);
-		matrix = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		matrix = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 		shaderShadowMap.SetMat4("shadowMatrices[3]", matrix);
-		matrix = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		shaderShadowMap.SetMat4("shadowMatrices[4]", matrix);
-		matrix = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		shaderShadowMap.SetMat4("shadowMatrices[5]", matrix);
 
-		renderScene(shaderShadowMap);
+		glViewport(0, 0, WIDTH_SHADOW, HEIGHT_SHADOW);
+		renderCube();
 		glBindVertexArray(VAO[0]);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 0, finalSize);
 
+		glViewport(0, 0, WIDTH, HEIGHT);
 		glDisable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
@@ -182,19 +193,21 @@ int main() {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
 
-		glBindVertexArray(VAO[1]);
+		shaderDraw.Set1UniformValue("drawTrueColor", 0);
+		glBindVertexArray(VAO[2]);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-		/*glBindVertexArray(VAO[0]);
+		shaderDraw.Set1UniformValue("drawTrueColor", 1);
+		glBindVertexArray(VAO[1]);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-*/
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
 	glDeleteTextures(1, &depthCubeMap);
-	glDeleteVertexArrays(2, VAO);
-	glDeleteBuffers(2, VBO);
+	glDeleteVertexArrays(3, VAO);
+	glDeleteBuffers(3, VBO);
 	glDeleteBuffers(1, &EBO);
 
 	glfwTerminate();
@@ -202,9 +215,35 @@ int main() {
 	return 0;
 }
 
+void generateCubeBox(float * originVertexs, int originSize, int step, float ** outVertexs, int * outSize) {
+	float * newVertexsBuffer = new float[originSize / step * 6 * 3];
+	*outVertexs = newVertexsBuffer;
+	*outSize = originSize / step * 6 * 3;
+	for (int i = 0; i < originSize / step; ++i) {
+		float * start = originVertexs + i * step;
+		glm::vec3 first(start[0], start[1], 0.f);
+		glm::vec3 second;
+		if (i == originSize / step - 1) {
+			second = glm::vec3(originVertexs[0], originVertexs[1], 0.f);
+		}
+		else {
+			second = glm::vec3(start[step], start[step + 1], 0.f);
+		}
 
-void renderScene(const Shader & shader) {
-    renderCube();
+		glm::vec3 first1 = first + glm::vec3(0.f, 0.f, 0.1f);
+		glm::vec3 first2 = first + glm::vec3(0.f, 0.f, -0.1f);
+		glm::vec3 second1 = second + glm::vec3(0.f, 0.f, 0.1f);
+		glm::vec3 second2 = second + glm::vec3(0.f, 0.f, -0.1f);
+
+		glm::vec3 order[6] = { first1, first2, second1, second1, second2, first2 };
+		float * starWrite = newVertexsBuffer + i * 6 * 3;
+		for (int j = 0; j < 6; j++)
+		{
+			starWrite[j * 3 + 0] = order[j].x;
+			starWrite[j * 3 + 1] = order[j].y;
+			starWrite[j * 3 + 2] = order[j].z;
+		}
+	}
 }
 
 unsigned int cubeVAO = 0;

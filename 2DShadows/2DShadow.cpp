@@ -22,10 +22,7 @@ const unsigned int WIDTH = 900;
 const unsigned int HEIGHT = 900;
 const unsigned int WIDTH_SHADOW = 900;
 const unsigned int HEIGHT_SHADOW = 900;
-const unsigned int MaxPointsCount = 256;
-unsigned int uboPoints;
-
-vector<glm::vec3> points;
+glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 
 void renderCube();
 void generateCubeBox(float * vertexs, int originSize, int step, float ** outVertexs, int * size);
@@ -59,11 +56,7 @@ int main() {
             float x = xPos / width * 2  - 1;
             float y = -yPos / height * 2 + 1;
             
-            if (points.size() >= MaxPointsCount) {
-                
-            }
-            else
-                points.push_back(glm::vec3(x, y, glfwGetTime()));
+			lightPos = glm::vec3(x, y, 0);
 		}
 	});
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -78,9 +71,15 @@ int main() {
 	}
 
 	float verticesObstacle[] = {
-		-0.5f, -0.25f, 1.0f,
-		-0.25f, 0.20f, -1.0f,
-		-0.15f, -0.45f, 1.0f
+		-0.5f, -0.25f, 0.0f,
+		-0.25f, 0.20f, 0.0f,
+		-0.15f, -0.45f, 0.0f
+	};
+
+	float verticesObstacle2[] = {
+		0.25f, 0.25f, 0.0f,
+		0.75f, 0.25f, 0.0f,
+		0.5f, 0.75f, 0.0f
 	};
 
 	float verticesPanel[] = {
@@ -98,9 +97,13 @@ int main() {
 	int finalSize;
 	generateCubeBox(verticesObstacle, sizeof(verticesObstacle) / sizeof(float), 3, &finalVerticesObstacle, &finalSize);
 
-	unsigned int VAO[3], VBO[3], EBO;
-	glGenVertexArrays(3, VAO);
-	glGenBuffers(3, VBO);
+	float * finalVerticesObstacle2;
+	int finalSize2;
+	generateCubeBox(verticesObstacle2, sizeof(verticesObstacle2) / sizeof(float), 3, &finalVerticesObstacle2, &finalSize2);
+
+	unsigned int VAO[5], VBO[5], EBO;
+	glGenVertexArrays(5, VAO);
+	glGenBuffers(5, VBO);
 	glGenBuffers(1, &EBO);
 
 	glBindVertexArray(VAO[0]);
@@ -111,12 +114,24 @@ int main() {
 
 	glBindVertexArray(VAO[1]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-	glBufferData(GL_ARRAY_BUFFER,sizeof(verticesObstacle), verticesObstacle, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, finalSize2 * sizeof(float), finalVerticesObstacle2, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 
 	glBindVertexArray(VAO[2]);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
+	glBufferData(GL_ARRAY_BUFFER,sizeof(verticesObstacle), verticesObstacle, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+
+	glBindVertexArray(VAO[3]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesObstacle2), verticesObstacle2, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+
+	glBindVertexArray(VAO[4]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[4]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesPanel), verticesPanel, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicesPanel), indicesPanel, GL_STATIC_DRAW);
@@ -153,10 +168,8 @@ int main() {
 	glEnable(GL_DEPTH_TEST);
 
 	float nearPlane = 0.0f;
-	float farPlane = 2.0f;
+	float farPlane = 5.0f;
 	while (!glfwWindowShouldClose(window)) {
-		glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
-
 		glEnable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
@@ -182,6 +195,9 @@ int main() {
 		glBindVertexArray(VAO[0]);
 		glDrawArrays(GL_TRIANGLES, 0, finalSize);
 
+		glBindVertexArray(VAO[1]);
+		glDrawArrays(GL_TRIANGLES, 0, finalSize2);
+
 		glViewport(0, 0, WIDTH, HEIGHT);
 		glDisable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -194,11 +210,13 @@ int main() {
 		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
 
 		shaderDraw.Set1UniformValue("drawTrueColor", 0);
-		glBindVertexArray(VAO[2]);
+		glBindVertexArray(VAO[4]);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		shaderDraw.Set1UniformValue("drawTrueColor", 1);
-		glBindVertexArray(VAO[1]);
+		glBindVertexArray(VAO[2]);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(VAO[3]);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 		glfwSwapBuffers(window);
@@ -206,9 +224,12 @@ int main() {
 	}
 
 	glDeleteTextures(1, &depthCubeMap);
-	glDeleteVertexArrays(3, VAO);
-	glDeleteBuffers(3, VBO);
+	glDeleteVertexArrays(5, VAO);
+	glDeleteBuffers(5, VBO);
 	glDeleteBuffers(1, &EBO);
+
+	delete finalVerticesObstacle;
+	delete finalVerticesObstacle2;
 
 	glfwTerminate();
 

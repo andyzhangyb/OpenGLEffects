@@ -168,11 +168,11 @@ int main() {
 
 	float nearPlane = 0.0f;
 	float farPlane = 5.0f;
+	glClearDepth(1.0f);
 	while (!glfwWindowShouldClose(window)) {
 		glEnable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
-		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		shaderShadowMap.Use();

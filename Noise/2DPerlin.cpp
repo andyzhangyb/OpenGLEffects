@@ -27,7 +27,7 @@ int main() {
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-	GLFWwindow * window = glfwCreateWindow(WIDTH, HEIGHT, "outline", NULL, NULL);
+	GLFWwindow * window = glfwCreateWindow(WIDTH, HEIGHT, "2DPerlin noise", NULL, NULL);
 
 	if (!window) {
 		cout << "failed to create window!" << endl;

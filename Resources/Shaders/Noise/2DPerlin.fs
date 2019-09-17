@@ -1,0 +1,324 @@
+#version 330 core
+
+out vec4 FragColor;
+
+in vec2 pos;
+
+float step = 1 / 30.0;
+
+int p[256] = int[256](151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 3, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54, 65, 25, 63, 161, 1, 16, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196, 135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124, 123, 5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42, 223, 183, 170, 213, 119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9, 129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254, 138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180);
+
+vec2 grad2[4] = vec2[4](
+    vec2(-1, -1),
+    vec2(1, -1),
+    vec2(1, 1),
+    vec2(-1, 1)
+);
+
+int indexPerm(int index) {
+    index = int(mod(index, 256));
+    if (index == 0) return p[0];
+    if (index == 1) return p[1];
+    if (index == 2) return p[2];
+    if (index == 3) return p[3];
+    if (index == 4) return p[4];
+    if (index == 5) return p[5];
+    if (index == 6) return p[6];
+    if (index == 7) return p[7];
+    if (index == 8) return p[8];
+    if (index == 9) return p[9];
+    if (index == 10) return p[10];
+    if (index == 11) return p[11];
+    if (index == 12) return p[12];
+    if (index == 13) return p[13];
+    if (index == 14) return p[14];
+    if (index == 15) return p[15];
+    if (index == 16) return p[16];
+    if (index == 17) return p[17];
+    if (index == 18) return p[18];
+    if (index == 19) return p[19];
+    if (index == 20) return p[20];
+    if (index == 21) return p[21];
+    if (index == 22) return p[22];
+    if (index == 23) return p[23];
+    if (index == 24) return p[24];
+    if (index == 25) return p[25];
+    if (index == 26) return p[26];
+    if (index == 27) return p[27];
+    if (index == 28) return p[28];
+    if (index == 29) return p[29];
+    if (index == 30) return p[30];
+    if (index == 31) return p[31];
+    if (index == 32) return p[32];
+    if (index == 33) return p[33];
+    if (index == 34) return p[34];
+    if (index == 35) return p[35];
+    if (index == 36) return p[36];
+    if (index == 37) return p[37];
+    if (index == 38) return p[38];
+    if (index == 39) return p[39];
+    if (index == 40) return p[40];
+    if (index == 41) return p[41];
+    if (index == 42) return p[42];
+    if (index == 43) return p[43];
+    if (index == 44) return p[44];
+    if (index == 45) return p[45];
+    if (index == 46) return p[46];
+    if (index == 47) return p[47];
+    if (index == 48) return p[48];
+    if (index == 49) return p[49];
+    if (index == 50) return p[50];
+    if (index == 51) return p[51];
+    if (index == 52) return p[52];
+    if (index == 53) return p[53];
+    if (index == 54) return p[54];
+    if (index == 55) return p[55];
+    if (index == 56) return p[56];
+    if (index == 57) return p[57];
+    if (index == 58) return p[58];
+    if (index == 59) return p[59];
+    if (index == 60) return p[60];
+    if (index == 61) return p[61];
+    if (index == 62) return p[62];
+    if (index == 63) return p[63];
+    if (index == 64) return p[64];
+    if (index == 65) return p[65];
+    if (index == 66) return p[66];
+    if (index == 67) return p[67];
+    if (index == 68) return p[68];
+    if (index == 69) return p[69];
+    if (index == 70) return p[70];
+    if (index == 71) return p[71];
+    if (index == 72) return p[72];
+    if (index == 73) return p[73];
+    if (index == 74) return p[74];
+    if (index == 75) return p[75];
+    if (index == 76) return p[76];
+    if (index == 77) return p[77];
+    if (index == 78) return p[78];
+    if (index == 79) return p[79];
+    if (index == 80) return p[80];
+    if (index == 81) return p[81];
+    if (index == 82) return p[82];
+    if (index == 83) return p[83];
+    if (index == 84) return p[84];
+    if (index == 85) return p[85];
+    if (index == 86) return p[86];
+    if (index == 87) return p[87];
+    if (index == 88) return p[88];
+    if (index == 89) return p[89];
+    if (index == 90) return p[90];
+    if (index == 91) return p[91];
+    if (index == 92) return p[92];
+    if (index == 93) return p[93];
+    if (index == 94) return p[94];
+    if (index == 95) return p[95];
+    if (index == 96) return p[96];
+    if (index == 97) return p[97];
+    if (index == 98) return p[98];
+    if (index == 99) return p[99];
+    if (index == 100) return p[100];
+    if (index == 101) return p[101];
+    if (index == 102) return p[102];
+    if (index == 103) return p[103];
+    if (index == 104) return p[104];
+    if (index == 105) return p[105];
+    if (index == 106) return p[106];
+    if (index == 107) return p[107];
+    if (index == 108) return p[108];
+    if (index == 109) return p[109];
+    if (index == 110) return p[110];
+    if (index == 111) return p[111];
+    if (index == 112) return p[112];
+    if (index == 113) return p[113];
+    if (index == 114) return p[114];
+    if (index == 115) return p[115];
+    if (index == 116) return p[116];
+    if (index == 117) return p[117];
+    if (index == 118) return p[118];
+    if (index == 119) return p[119];
+    if (index == 120) return p[120];
+    if (index == 121) return p[121];
+    if (index == 122) return p[122];
+    if (index == 123) return p[123];
+    if (index == 124) return p[124];
+    if (index == 125) return p[125];
+    if (index == 126) return p[126];
+    if (index == 127) return p[127];
+    if (index == 128) return p[128];
+    if (index == 129) return p[129];
+    if (index == 130) return p[130];
+    if (index == 131) return p[131];
+    if (index == 132) return p[132];
+    if (index == 133) return p[133];
+    if (index == 134) return p[134];
+    if (index == 135) return p[135];
+    if (index == 136) return p[136];
+    if (index == 137) return p[137];
+    if (index == 138) return p[138];
+    if (index == 139) return p[139];
+    if (index == 140) return p[140];
+    if (index == 141) return p[141];
+    if (index == 142) return p[142];
+    if (index == 143) return p[143];
+    if (index == 144) return p[144];
+    if (index == 145) return p[145];
+    if (index == 146) return p[146];
+    if (index == 147) return p[147];
+    if (index == 148) return p[148];
+    if (index == 149) return p[149];
+    if (index == 150) return p[150];
+    if (index == 151) return p[151];
+    if (index == 152) return p[152];
+    if (index == 153) return p[153];
+    if (index == 154) return p[154];
+    if (index == 155) return p[155];
+    if (index == 156) return p[156];
+    if (index == 157) return p[157];
+    if (index == 158) return p[158];
+    if (index == 159) return p[159];
+    if (index == 160) return p[160];
+    if (index == 161) return p[161];
+    if (index == 162) return p[162];
+    if (index == 163) return p[163];
+    if (index == 164) return p[164];
+    if (index == 165) return p[165];
+    if (index == 166) return p[166];
+    if (index == 167) return p[167];
+    if (index == 168) return p[168];
+    if (index == 169) return p[169];
+    if (index == 170) return p[170];
+    if (index == 171) return p[171];
+    if (index == 172) return p[172];
+    if (index == 173) return p[173];
+    if (index == 174) return p[174];
+    if (index == 175) return p[175];
+    if (index == 176) return p[176];
+    if (index == 177) return p[177];
+    if (index == 178) return p[178];
+    if (index == 179) return p[179];
+    if (index == 180) return p[180];
+    if (index == 181) return p[181];
+    if (index == 182) return p[182];
+    if (index == 183) return p[183];
+    if (index == 184) return p[184];
+    if (index == 185) return p[185];
+    if (index == 186) return p[186];
+    if (index == 187) return p[187];
+    if (index == 188) return p[188];
+    if (index == 189) return p[189];
+    if (index == 190) return p[190];
+    if (index == 191) return p[191];
+    if (index == 192) return p[192];
+    if (index == 193) return p[193];
+    if (index == 194) return p[194];
+    if (index == 195) return p[195];
+    if (index == 196) return p[196];
+    if (index == 197) return p[197];
+    if (index == 198) return p[198];
+    if (index == 199) return p[199];
+    if (index == 200) return p[200];
+    if (index == 201) return p[201];
+    if (index == 202) return p[202];
+    if (index == 203) return p[203];
+    if (index == 204) return p[204];
+    if (index == 205) return p[205];
+    if (index == 206) return p[206];
+    if (index == 207) return p[207];
+    if (index == 208) return p[208];
+    if (index == 209) return p[209];
+    if (index == 210) return p[210];
+    if (index == 211) return p[211];
+    if (index == 212) return p[212];
+    if (index == 213) return p[213];
+    if (index == 214) return p[214];
+    if (index == 215) return p[215];
+    if (index == 216) return p[216];
+    if (index == 217) return p[217];
+    if (index == 218) return p[218];
+    if (index == 219) return p[219];
+    if (index == 220) return p[220];
+    if (index == 221) return p[221];
+    if (index == 222) return p[222];
+    if (index == 223) return p[223];
+    if (index == 224) return p[224];
+    if (index == 225) return p[225];
+    if (index == 226) return p[226];
+    if (index == 227) return p[227];
+    if (index == 228) return p[228];
+    if (index == 229) return p[229];
+    if (index == 230) return p[230];
+    if (index == 231) return p[231];
+    if (index == 232) return p[232];
+    if (index == 233) return p[233];
+    if (index == 234) return p[234];
+    if (index == 235) return p[235];
+    if (index == 236) return p[236];
+    if (index == 237) return p[237];
+    if (index == 238) return p[238];
+    if (index == 239) return p[239];
+    if (index == 240) return p[240];
+    if (index == 241) return p[241];
+    if (index == 242) return p[242];
+    if (index == 243) return p[243];
+    if (index == 244) return p[244];
+    if (index == 245) return p[245];
+    if (index == 246) return p[246];
+    if (index == 247) return p[247];
+    if (index == 248) return p[248];
+    if (index == 249) return p[249];
+    if (index == 250) return p[250];
+    if (index == 251) return p[251];
+    if (index == 252) return p[252];
+    if (index == 253) return p[253];
+    if (index == 254) return p[254];
+    if (index == 255) return p[255];    
+    return 1;
+}
+
+vec2 indexGrad(int index) {
+    if (index == 0) return grad2[0];
+    if (index == 1) return grad2[1];
+    if (index == 2) return grad2[2];
+    if (index == 3) return grad2[3];
+    return grad2[0];
+}
+
+vec2 getGrad(vec2 x)
+{
+    const vec2 k = vec2(0.3183099, 0.3678794);
+    x = x * k + k.yx;
+    return -1.0 + 2.0 * fract(16.0 * k * fract(x.x * x.y * (x.x + x.y)));
+}
+
+void main(){
+    vec2 calcuPos = (pos + 1.0) / step / 2.0;
+
+    vec2 floorPos = floor(calcuPos);
+    vec2 fraction = calcuPos - floorPos;
+
+    int floorX = int(floorPos.x);
+    int floorY = int(floorPos.y);
+
+    // vec2 g00 = indexGrad(int(mod(indexPerm(floorX + indexPerm(floorY)), 4.0)));
+    // vec2 g10 = indexGrad(int(mod(indexPerm(floorX + 1 + indexPerm(floorY)), 4.0)));
+    // vec2 g01 = indexGrad(int(mod(indexPerm(floorX + indexPerm(floorY + 1)), 4.0)));
+    // vec2 g11 = indexGrad(int(mod(indexPerm(floorX + 1 + indexPerm(floorY + 1)), 4.0)));
+    vec2 g00 = getGrad(vec2(floorX, floorY));
+    vec2 g10 = getGrad(vec2(floorX + 1, floorY));
+    vec2 g01 = getGrad(vec2(floorX, floorY + 1));
+    vec2 g11 = getGrad(vec2(floorX + 1, floorY + 1));
+    
+    float n00 = dot(g00, fraction);
+    float n10 = dot(g10, (fraction - vec2(1.0, 0.0)));
+    float n01 = dot(g01, (fraction - vec2(0.0, 1.0)));
+    float n11 = dot(g11, (fraction - vec2(1.0, 1.0)));
+
+    vec2 factor = fraction * fraction * fraction * (6.0 * fraction * fraction - 15.0 * fraction + 10);
+
+    float nx0 = mix(n00, n10, factor.x);
+    float nx1 = mix(n01, n11, factor.x);
+    float finalValue = mix(nx0, nx1, factor.y) + 0.5;
+
+    FragColor = vec4(finalValue, finalValue, finalValue, 1.0);
+}
